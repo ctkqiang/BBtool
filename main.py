@@ -6,6 +6,7 @@ import subprocess
 import datetime
 
 tools = {
+    'curl': 'curl -v -A "Mozilla/5.0" -H "Accept: */*" -H "Connection: keep-alive" {target}',
     'nmap': 'nmap -sV -p- -T4 {target}',
     'subfinder': 'subfinder -d {target} -all | tee subdomain.txt',
     'httpx': 'httpx --list subdomain.txt -ports 80,443,8000,8080,3000 -title -tech-detect -status-code -o httpx_out.txt',
@@ -67,6 +68,9 @@ class BugBountyApp:
 
         self.stop_btn = ttk.Button(frame_buttons, text="⏹️ 停止扫描", bootstyle="danger", command=self.stop_scan, state="disabled")
         self.stop_btn.pack(side=LEFT, padx=5)
+
+        self.clear_btn = ttk.Button(frame_buttons, text="🧹 清除日志", bootstyle="warning", command=self.clear_logs)
+        self.clear_btn.pack(side=LEFT, padx=5)
 
         self.save_btn = ttk.Button(frame_buttons, text="💾 保存日志", bootstyle="primary", command=self.save_logs)
         self.save_btn.pack(side=LEFT, padx=5)
@@ -151,6 +155,11 @@ class BugBountyApp:
         if self.current_process:
             self.current_process.terminate()
         self.log("🛑 正在停止扫描...")
+
+    def clear_logs(self):
+        self.log_area.delete(1.0, "end")
+        self.log_data = ""
+        self.log("✨ 日志已清除")
 
     def save_logs(self):
         filepath = filedialog.asksaveasfilename(defaultextension=".txt")
