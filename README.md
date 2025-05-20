@@ -119,7 +119,7 @@ pip3 install dirsearch xsstrike sqlmap
 1. 启动程序：
 
 ```bash
-python3 main.py
+python3 run.py
 ```
 
 2. 基本操作流程：

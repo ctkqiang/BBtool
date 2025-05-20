@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🕷️ 漏洞赏金工具 - 安全测试的得力助手</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tdesign-miniprogram/style/index.css">
+    <style>
+        :root {
+            --primary-color: #6f42c1; /* A vibrant purple */
+            --secondary-color: #4caf50; /* A pleasant green */
+            --border-radius: 8px; /* Consistent border radius */
+            --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            --transition-speed: 0.3s ease; /* Standard transition speed */
+
+            /* Default (Light) Theme Variables */
+            --bg-gradient-start: #f8f9fa; /* Light grey */
+            --bg-gradient-end: #e9ecef; /* Lighter grey */
+            --text-color: #212529; /* Dark text */
+            --heading-color: #343a40; /* Slightly darker heading */
+            --card-bg: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+            --card-border: rgba(0, 0, 0, 0.1); /* Light border */
+            --nav-bg: rgba(248, 249, 250, 0.9); /* Semi-transparent light nav */
+            --nav-border: rgba(0, 0, 0, 0.1); /* Light nav border */
+            --footer-bg: #343a40; /* Dark footer */
+            --footer-text: #e9ecef; /* Light footer text */
+        }
+        
+        [data-theme="dark"] {
+            --bg-gradient-start: #1a1a1a; /* Dark grey */
+            --bg-gradient-end: #363636; /* Darker grey */
+            --text-color: #e9ecef; /* Light text */
+            --heading-color: #f8f9fa; /* Lighter heading */
+            --card-bg: rgba(40, 40, 40, 0.9); /* Semi-transparent dark grey */
+            --card-border: rgba(255, 255, 255, 0.1); /* Dark border */
+            --nav-bg: rgba(33, 37, 41, 0.9); /* Semi-transparent dark nav */
+            --nav-border: rgba(255, 255, 255, 0.1); /* Dark nav border */
+            --footer-bg: #212529; /* Even darker footer */
+            --footer-text: #ced4da; /* Slightly darker light text */
+        }
+        
+        [data-theme="auto"] {
+            /* Auto theme will inherit from light or dark based on system preference */
+            @media (prefers-color-scheme: dark) {
+                --bg-gradient-start: #1a1a1a;
+                --bg-gradient-end: #363636;
+                --text-color: #e9ecef;
+                --heading-color: #f8f9fa;
+                --card-bg: rgba(40, 40, 40, 0.9);
+                --card-border: rgba(255, 255, 255, 0.1);
+                --nav-bg: rgba(33, 37, 41, 0.9);
+                --nav-border: rgba(255, 255, 255, 0.1);
+                --footer-bg: #212529;
+                --footer-text: #ced4da;
+            }
+            @media (prefers-color-scheme: light) {
+                 --bg-gradient-start: #f8f9fa;
+                 --bg-gradient-end: #e9ecef;
+                 --text-color: #212529;
+                 --heading-color: #343a40;
+                 --card-bg: rgba(255, 255, 255, 0.9);
+                 --card-border: rgba(0, 0, 0, 0.1);
+                 --nav-bg: rgba(248, 249, 250, 0.9);
+                 --nav-border: rgba(0, 0, 0, 0.1);
+                 --footer-bg: #343a40;
+                 --footer-text: #e9ecef;
+            }
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, 
+                var(--bg-gradient-start) 0%, 
+                var(--bg-gradient-end) 100%);
+            color: var(--text-color);
+            transition: background var(--transition-speed), color var(--transition-speed);
+            min-height: 100vh; /* Ensure body takes at least full viewport height */
+            position: relative; /* Needed for footer positioning */
+            padding-bottom: 80px; /* Add padding to prevent footer from overlapping content */
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--heading-color);
+        }
+
+        .navbar {
+            background-color: var(--nav-bg) !important; /* Use variable */
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--nav-border); /* Use variable */
+            transition: all var(--transition-speed);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Add subtle shadow to navbar */
+        }
+        
+        .navbar-brand {
+            color: var(--heading-color) !important; /* Ensure brand text color adapts */
+            font-weight: 700;
+            transition: color var(--transition-speed);
+        }
+
+        .navbar-brand img {
+            filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.3)); /* Add shadow to logo */
+        }
+
+        .nav-link {
+             color: var(--text-color) !important; /* Ensure nav link color adapts */
+             transition: color var(--transition-speed);
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color) !important; /* Highlight on hover */
+        }
+
+        .hero-section {
+            padding: 120px 0 80px 0; /* Adjust padding */
+            background: radial-gradient(circle at center, rgba(111, 66, 193, 0.2) 0%, transparent 70%);
+        }
+
+        .hero-section h1 {
+            font-size: 3.5rem; /* Larger heading */
+            font-weight: 700;
+            margin-bottom: 1.5rem !important;
+        }
+
+        .hero-section .lead {
+            font-size: 1.25rem;
+            margin-bottom: 3rem !important;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: background-color var(--transition-speed), border-color var(--transition-speed), transform var(--transition-speed);
+        }
+        .btn-primary:hover {
+            background-color: #5a32a3; /* Slightly darker purple */
+            border-color: #5a32a3;
+            transform: translateY(-2px); /* Lift button slightly */
+        }
+
+        .btn-outline-light {
+             color: var(--text-color); /* Use text color for outline */
+             border-color: var(--text-color); /* Use text color for outline */
+             transition: color var(--transition-speed), border-color var(--transition-speed), background-color var(--transition-speed), transform var(--transition-speed);
+        }
+
+        .btn-outline-light:hover {
+             color: var(--bg-gradient-start) !important; /* Text color changes on hover */
+             background-color: var(--text-color); /* Background changes on hover */
+             border-color: var(--text-color); /* Border changes on hover */
+             transform: translateY(-2px); /* Lift button slightly */
+        }
+
+
+        #features, #tools, #demo, #download {
+            padding: 80px 0; /* Consistent section padding */
+        }
+
+        #tools {
+            background-color: var(--footer-bg); /* Use footer background for tools section */
+            color: var(--footer-text); /* Use footer text color */
+        }
+
+        #tools h2 {
+            color: var(--heading-color); /* Ensure heading color is appropriate */
+        }
+
+        .feature-icon {
+            font-size: 3rem; /* Slightly larger icons */
+            color: var(--primary-color); /* Use primary color for feature icons */
+            margin-bottom: 1.5rem; /* More space below icon */
+        }
+
+        .card {
+            background: var(--card-bg); /* Use variable */
+            border: 1px solid var(--card-border); /* Use variable */
+            border-radius: var(--border-radius); /* Use variable */
+            backdrop-filter: blur(10px);
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+            box-shadow: var(--box-shadow); /* Apply shadow */
+        }
+        .card:hover {
+            transform: translateY(-8px); /* More pronounced lift on hover */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* More pronounced shadow on hover */
+        }
+
+        .card-title {
+            color: var(--heading-color); /* Use heading color for card titles */
+        }
+
+        .card-text {
+            color: var(--text-color); /* Use text color for card text */
+        }
+        
+        .tool-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .demo-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border-radius: var(--border-radius); /* Use variable */
+            border: 2px solid var(--primary-color); /* Use primary color for border */
+            box-shadow: var(--box-shadow); /* Apply shadow */
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+        }
+        .demo-image:hover {
+            transform: scale(1.02); /* Slightly less scale on hover */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* More pronounced shadow on hover */
+        }
+
+        #download .card {
+            background: var(--card-bg); /* Use variable */
+            border: 1px solid var(--card-border); /* Use variable */
+            border-radius: var(--border-radius); /* Use variable */
+            box-shadow: var(--box-shadow); /* Apply shadow */
+        }
+
+        #download .btn-outline-primary {
+             color: var(--primary-color);
+             border-color: var(--primary-color);
+             transition: color var(--transition-speed), border-color var(--transition-speed), background-color var(--transition-speed), transform var(--transition-speed);
+        }
+
+        #download .btn-outline-primary:hover {
+             color: var(--bg-gradient-start) !important;
+             background-color: var(--primary-color);
+             border-color: var(--primary-color);
+             transform: translateY(-2px);
+        }
+
+
+        footer {
+            background-color: var(--footer-bg); /* Use variable */
+            color: var(--footer-text); /* Use variable */
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+
+        footer a {
+            color: var(--footer-text) !important; /* Ensure link color matches footer text */
+            transition: color var(--transition-speed);
+        }
+
+        footer a:hover {
+            color: var(--primary-color) !important; /* Highlight social links on hover */
+        }
+
+        /* Adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 100px 0 60px 0;
+            }
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+            .hero-section .lead {
+                font-size: 1rem;
+            }
+            #features, #tools, #demo, #download {
+                padding: 60px 0;
+            }
+            .feature-icon {
+                font-size: 2rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="../assets/logo.png" alt="Logo" height="40" class="me-2">
+                漏洞赏金工具
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#features">特性</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tools">工具</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#download">下载</a></li>
+                    <li class="nav-item">
+                        <button id="themeSwitcher" class="btn btn-link nav-link">
+                            🌓 自动
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4 mb-4">🕷️ 漏洞赏金工具</h1>
+            <p class="lead mb-5">专为安全研究人员和白帽子黑客设计的图形化渗透测试工具集</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="#download" class="btn btn-primary btn-lg">立即下载</a>
+                <a href="https://github.com/ctkqiang/bug-bounty-tool" class="btn btn-outline-light btn-lg">GitHub</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">✨ 主要特性</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-palette feature-icon"></i>
+                            <h3 class="card-title">美观的界面</h3>
+                            <p class="card-text">支持多种主题切换，实时日志输出，简洁直观的操作界面</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-tools feature-icon"></i>
+                            <h3 class="card-title">工具集成</h3>
+                            <p class="card-text">集成多种常用的安全测试工具，一站式完成渗透测试任务</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-lightning feature-icon"></i>
+                            <h3 class="card-title">便捷操作</h3>
+                            <p class="card-text">一键启动多个工具，实时查看进度，随时暂停继续</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tools" class="py-5 bg-dark">
+        <div class="container">
+            <h2 class="text-center mb-5">🛠️ 集成工具</h2>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">curl</h5>
+                            <p class="card-text">HTTP请求测试工具</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">nmap</h5>
+                            <p class="card-text">端口扫描和服务检测</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">sqlmap</h5>
+                            <p class="card-text">SQL注入检测工具</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">xsstrike</h5>
+                            <p class="card-text">XSS漏洞扫描工具</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="demo" class="py-5">
+        <div class="container text-center">
+            <h2 class="mb-5">📸 演示图片</h2>
+            <img src="../assets/demo/1.png" alt="Demo Image" class="demo-image">
+        </div>
+    </section>
+
+    <section id="download" class="py-5">
+        <div class="container text-center">
+            <h2 class="mb-5">📥 立即下载</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card p-4">
+                        <h3 class="mb-4">选择您的操作系统</h3>
+                        <div class="d-flex justify-content-center gap-4">
+                            <a href="#" class="btn btn-lg btn-outline-light">
+                                <i class="bi bi-apple me-2"></i>macOS
+                            </a>
+                            <a href="#" class="btn btn-lg btn-outline-light">
+                                <i class="bi bi-windows me-2"></i>Windows
+                            </a>
+                            <a href="#" class="btn btn-lg btn-outline-light">
+                                <i class="bi bi-ubuntu me-2"></i>Linux
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-4 bg-dark">
+        
+        <div class="container text-center">
+            <p>© 2025 漏洞赏金工具 - 由 钟智强 开发</p>
+            <div class="social-links">
+                <a href="mailto:johnmelodymel@qq.com" class="text-light me-3"><i class="bi bi-envelope"></i></a>
+                <a href="https://github.com/ctkqiang" class="text-light me-3"><i class="bi bi-github"></i></a>
+                <span class="text-light me-3"><i class="bi bi-qq"></i> QQ：3072486255</span>
+                <span class="text-light me-3"> <i class="bi bi-wechat"></i> 微信：ctkqiang</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tdesign-icons-view/dist/index.umd.js"></script>
+</body>
+</html>
