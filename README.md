@@ -54,7 +54,12 @@
 1. 克隆项目代码：
 
 ```bash
-git clone https://github.com/johnmelodyme/bug-bounty-tool.git
+git clone https://github.com/ctkqiang/bug-bounty-tool.git
+
+或
+
+git clone https://gitcode.com/ctkqiang_sr/bug-bounty-tool.git
+
 cd bug-bounty-tool
 ```
 
