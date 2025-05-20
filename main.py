@@ -16,18 +16,53 @@ tools = {
     'httpx': 'httpx --list subdomain.txt -ports 80,443,8000,8080,3000 -title -tech-detect -status-code -o httpx_out.txt',
     'dirsearch': 'dirsearch -u http://{target} -e php,html,js',
     'xsstrike': 'xsstrike -u http://{target} --crawl --skip',
-    'sqlmap': 'sqlmap -u http://{target} --batch --level=2',
+    # sqlmap 基础模式
+    'sqlmap_basic': 'sqlmap -u "{target}" --batch',
+    'sqlmap_aggressive': 'sqlmap -u "{target}" --level=5 --risk=3 --batch',
+    'sqlmap_post': 'sqlmap -u "{target}" --data="username=admin&password=1" --batch',
+    'sqlmap_cookie': 'sqlmap -u "{target}" --cookie="PHPSESSID=12345" --batch',
+    'sqlmap_headers': 'sqlmap -u "{target}" --headers="X-Forwarded-For: 127.0.0.1" --batch',
+    'sqlmap_dbs': 'sqlmap -u "{target}" --dbs --batch',
+    'sqlmap_tables': 'sqlmap -u "{target}" -D <数据库名> --tables --batch',
+    'sqlmap_columns': 'sqlmap -u "{target}" -D <数据库名> -T <表名> --columns --batch',
+    'sqlmap_dump': 'sqlmap -u "{target}" -D <数据库名> -T <表名> -C <字段1>,<字段2> --dump --batch',
+    'sqlmap_proxy': 'sqlmap -u "{target}" --proxy="http://127.0.0.1:8080" --batch',
+    'sqlmap_os_shell': 'sqlmap -u "{target}" --os-shell --batch',
+    'hakrawler': 'echo {target} | hakrawler',
 }
 
 # 添加工具安装命令
 tool_install_commands = {
-    'curl': 'brew install curl',
-    'nmap': 'brew install nmap',
-    'subfinder': 'brew install subfinder',
-    'httpx': 'brew install httpx',
-    'dirsearch': 'pip3 install dirsearch',
-    'xsstrike': 'pip3 install xsstrike',
-    'sqlmap': 'pip3 install sqlmap'
+    'macos': {
+        'curl': 'brew install curl',
+        'nmap': 'brew install nmap',
+        'subfinder': 'brew install subfinder',
+        'httpx': 'brew install httpx',
+        'dirsearch': 'pip3 install dirsearch',
+        'xsstrike': 'pip3 install xsstrike',
+        'sqlmap': 'pip3 install sqlmap',
+        'hakrawler': 'go install github.com/hakluke/hakrawler@latest'
+    },
+    'windows': {
+        'curl': 'winget install curl',
+        'nmap': 'winget install nmap',
+        'subfinder': 'go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest',
+        'httpx': 'go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest',
+        'dirsearch': 'pip3 install dirsearch',
+        'xsstrike': 'pip3 install xsstrike',
+        'sqlmap': 'pip3 install sqlmap',
+        'hakrawler': 'go install github.com/hakluke/hakrawler@latest'
+    },
+    'linux': {
+        'curl': 'sudo apt-get install curl',
+        'nmap': 'sudo apt-get install nmap',
+        'subfinder': 'GO111MODULE=on go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest',
+        'httpx': 'GO111MODULE=on go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest',
+        'dirsearch': 'pip3 install dirsearch',
+        'xsstrike': 'pip3 install xsstrike',
+        'sqlmap': 'pip3 install sqlmap',
+        'hakrawler': 'go install github.com/hakluke/hakrawler@latest'
+    }
 }
 
 class BugBountyApp:
@@ -72,6 +107,7 @@ class BugBountyApp:
         help_menu.add_command(label="使用指南", command=self.show_guide)
         help_menu.add_command(label="工具说明", command=self.show_tools_info)
         help_menu.add_command(label="检查更新", command=self.check_update)
+        help_menu.add_command(label="安装工具", command=self.check_tools_installation)
         help_menu.add_separator()
         help_menu.add_command(label="关于", command=self.show_about)
 
@@ -101,16 +137,53 @@ class BugBountyApp:
         self.target_entry = ttk.Entry(frame_top, width=50)
         self.target_entry.pack(side=LEFT, padx=5)
 
-        frame_tools = ttk.LabelFrame(root, text="🧰 工具选择", padding=(10, 5))
-        frame_tools.pack(fill=X, padx=10, pady=10)
+        # Store frame_tools as instance variable
+        self.frame_tools = ttk.LabelFrame(root, text="🧰 工具选择", padding=(10, 5))
+        self.frame_tools.pack(fill=X, padx=10, pady=10)
 
+        # Main tools selection
         self.tool_vars = {}
-        for i, tool in enumerate(tools):
+        main_tools = ['curl', 'nmap', 'subfinder', 'httpx', 'dirsearch', 'xsstrike', 'sqlmap']
+        for i, tool in enumerate(main_tools):
             var = ttk.BooleanVar()
-            chk = ttk.Checkbutton(frame_tools, text=tool, variable=var, bootstyle="info-round-toggle")
+            chk = ttk.Checkbutton(self.frame_tools, text=tool, variable=var, bootstyle="info-round-toggle")
             chk.grid(row=i//3, column=i%3, padx=10, pady=5, sticky=W)
             self.tool_vars[tool] = var
+            if tool == 'sqlmap':
+                var.trace_add('write', self.toggle_sqlmap_options)
 
+        # SQLMap advanced options frame (initially hidden)
+        self.sqlmap_options_frame = ttk.LabelFrame(root, text="SQLMap 高级选项", padding=(10, 5))
+        self.sqlmap_option_vars = {}
+        
+        # SQLMap advanced options
+        self.sqlmap_options = [
+            ('基础模式', 'sqlmap_basic'),
+            ('高风险测试', 'sqlmap_aggressive'),
+            ('POST请求', 'sqlmap_post'),
+            ('Cookie注入', 'sqlmap_cookie'),
+            ('自定义头', 'sqlmap_headers'),
+            ('枚举数据库', 'sqlmap_dbs'),
+            ('枚举表', 'sqlmap_tables'),
+            ('枚举字段', 'sqlmap_columns'),
+            ('Dump数据', 'sqlmap_dump'),
+            ('代理模式', 'sqlmap_proxy'),
+            ('OS Shell', 'sqlmap_os_shell')
+        ]
+        
+        for i, (label, key) in enumerate(self.sqlmap_options):
+            var = ttk.BooleanVar()
+            chk = ttk.Checkbutton(
+                self.sqlmap_options_frame, 
+                text=label, 
+                variable=var, 
+                bootstyle="secondary-round-toggle"
+            )
+            chk.grid(row=i//3, column=i%3, padx=10, pady=5, sticky=W)
+            self.sqlmap_option_vars[key] = var
+        
+        # Initially hide the SQLMap options
+        self.sqlmap_options_frame.pack_forget()
         frame_buttons = ttk.Frame(root, padding=(10, 5))
         frame_buttons.pack(fill=X)
 
@@ -126,9 +199,9 @@ class BugBountyApp:
         self.save_btn = ttk.Button(frame_buttons, text="💾 保存日志", bootstyle="primary", command=self.save_logs)
         self.save_btn.pack(side=LEFT, padx=5)
 
-        ttk.Label(root, text="📄 实时日志输出：", font=("微软雅黑", 16)).pack(anchor=W, padx=10)
+        ttk.Label(root, text="实时日志输出：", font=("微软雅黑", 13)).pack(anchor=W, padx=10)
 
-        self.log_area = scrolledtext.ScrolledText(root, height=20, font=("Arial", 16, "bold"))
+        self.log_area = scrolledtext.ScrolledText(root, height=20, font=("Arial", 14, "bold"))
         self.log_area.pack(fill=BOTH, expand=True, padx=10, pady=5)
 
     def show_guide(self):
@@ -250,6 +323,17 @@ class BugBountyApp:
         except Exception as e:
             self.log(f"🔥 错误：{e}")
 
+    def toggle_sqlmap_options(self, *args):
+        """Toggle visibility of SQLMap advanced options"""
+        if self.tool_vars['sqlmap'].get():
+            # Show SQLMap options after the tools frame
+            self.sqlmap_options_frame.pack(fill=X, padx=10, pady=5, after=self.frame_tools)
+        else:
+            # Hide SQLMap options and reset all checkboxes
+            self.sqlmap_options_frame.pack_forget()
+            for var in self.sqlmap_option_vars.values():
+                var.set(False)
+
     def run_tools(self):
         target = self.target_entry.get().strip()
         if not target:
@@ -268,8 +352,18 @@ class BugBountyApp:
                 processed_target = processed_target[7:]
             elif processed_target.startswith('https://'):
                 processed_target = processed_target[8:]
-            # 移除末尾的斜杠
             processed_target = processed_target.rstrip('/')
+
+        # 处理 sqlmap 选项
+        sqlmap_selected = []
+        if 'sqlmap' in selected:
+            for key, var in self.sqlmap_option_vars.items():
+                if var.get():
+                    sqlmap_selected.append(key)
+            if not sqlmap_selected:
+                sqlmap_selected = ['sqlmap_basic']
+            selected.remove('sqlmap')
+            selected += sqlmap_selected
 
         self.scanning = True
         self.start_btn.configure(state="disabled")
@@ -279,11 +373,9 @@ class BugBountyApp:
             for tool in selected:
                 if not self.scanning:
                     break
-                # 根据工具类型选择使用原始目标还是处理后的目标
                 current_target = processed_target if tool == 'nmap' else target
                 cmd = tools[tool].format(target=current_target)
                 self.run_command(cmd)
-            
             self.scanning = False
             self.start_btn.configure(state="normal")
             self.stop_btn.configure(state="disabled")
@@ -402,6 +494,8 @@ QQ：  3072486255
 
     def is_tool_installed(self, tool_name):
         try:
+            if tool_name.startswith('sqlmap_'):
+                tool_name = 'sqlmap'
             result = subprocess.run(['which', tool_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             return result.returncode == 0
         except Exception:
@@ -409,15 +503,15 @@ QQ：  3072486255
 
     def show_installation_dialog(self, missing_tools):
         dialog = ttk.Toplevel(self.root)
-        dialog.title("⚠️ 缺少必要工具")
-        dialog.geometry("500x400")
+        dialog.title("🛠️ 工具状态检查")
+        dialog.geometry("800x500")
         
         content_frame = ttk.Frame(dialog, padding=20)
         content_frame.pack(fill=BOTH, expand=True)
         
         ttk.Label(
             content_frame,
-            text="以下工具尚未安装：",
+            text="工具安装状态：",
             font=("微软雅黑", 14, "bold")
         ).pack(pady=(0, 10))
         
@@ -425,64 +519,104 @@ QQ：  3072486255
         tools_frame = ttk.Frame(content_frame)
         tools_frame.pack(fill=X, pady=10)
         
-        # 为每个缺失的工具创建进度条
+        # 为所有工具创建状态指示器
         self.progress_bars = {}
-        for tool in missing_tools:
+        # Filter out sqlmap_* options from the tools list
+        all_tools = [tool for tool in tools.keys() if not tool.startswith('sqlmap_') or tool == 'sqlmap']
+        
+        for tool in all_tools:
             tool_frame = ttk.Frame(tools_frame)
             tool_frame.pack(fill=X, pady=5)
             
+            # 创建状态指示器
+            status_indicator = ttk.Label(
+                tool_frame,
+                text="●",
+                font=("微软雅黑", 12),
+                foreground="green" if tool not in missing_tools else "red"
+            )
+            status_indicator.pack(side=LEFT, padx=(0, 5))
+            
+            # 工具名称
             ttk.Label(
                 tool_frame,
-                text=f"• {tool}",
+                text=f"{tool}",
                 font=("微软雅黑", 12)
             ).pack(side=LEFT)
             
-            progress = ttk.Progressbar(
+            # 状态文本
+            status_text = "已安装" if tool not in missing_tools else "未安装"
+            ttk.Label(
                 tool_frame,
-                length=200,
-                mode='determinate',
+                text=f"({status_text})",
+                font=("微软雅黑", 10),
+                foreground="green" if tool not in missing_tools else "red"
+            ).pack(side=LEFT, padx=5)
+            
+            # 只为未安装的工具添加进度条
+            if tool in missing_tools:
+                progress = ttk.Progressbar(
+                    tool_frame,
+                    length=200,
+                    mode='determinate',
+                    bootstyle="success"
+                )
+                progress.pack(side=LEFT, padx=10)
+                self.progress_bars[tool] = progress
+        
+        # 只在有未安装工具时显示安装按钮
+        if missing_tools:
+            ttk.Button(
+                content_frame,
+                text="一键安装缺失工具",
+                command=lambda: self.install_tools(missing_tools, dialog),
                 bootstyle="success"
+            ).pack(pady=20)
+            
+            # 添加说明文本
+            note_text = """注意：
+            • 工具安装需要管理员权限
+            • 安装过程可能需要几分钟
+            • 请确保网络连接正常
+            • macOS用户需要先安装Homebrew
+            • 安装完成后需要重启应用"""
+            
+            note = scrolledtext.ScrolledText(
+                content_frame,
+                wrap=tk.WORD,
+                height=6,
+                font=("微软雅黑", 10)
             )
-            progress.pack(side=LEFT, padx=10)
-            self.progress_bars[tool] = progress
-        
-        # 添加安装按钮
-        ttk.Button(
-            content_frame,
-            text="一键安装所有工具",
-            command=lambda: self.install_tools(missing_tools, dialog),
-            bootstyle="success"
-        ).pack(pady=20)
-        
-        # 添加说明文本
-        note_text = """注意：
-• 工具安装需要管理员权限
-• 安装过程可能需要几分钟
-• 请确保网络连接正常
-• macOS用户需要先安装Homebrew
-• 安装完成后需要重启应用"""
-        
-        note = scrolledtext.ScrolledText(
-            content_frame,
-            wrap=tk.WORD,
-            height=6,
-            font=("微软雅黑", 10)
-        )
-        note.pack(fill=X)
-        note.insert("1.0", note_text)
-        note.configure(state="disabled")
+            note.pack(fill=X)
+            note.insert("1.0", note_text)
+            note.configure(state="disabled")
+        else:
+            ttk.Label(
+                content_frame,
+                text="✅ 所有工具已安装完成！",
+                font=("微软雅黑", 12, "bold"),
+                foreground="green"
+            ).pack(pady=20)
 
     def install_tools(self, missing_tools, dialog):
-        """安装缺失的工具"""
         def install_thread():
+            if sys.platform == "darwin":
+                os_type = 'macos'
+            elif sys.platform == "win32":
+                os_type = 'windows'
+            else:
+                os_type = 'linux'
+                
+            failed_tools = []
+            path_setup_needed = []
+        
             for tool in missing_tools:
                 try:
-                    # 更新进度条状态
                     self.progress_bars[tool]['value'] = 0
                     dialog.update()
                     
-                    # 执行安装命令
-                    cmd = tool_install_commands[tool]
+                    # Get OS-specific install command
+                    cmd = tool_install_commands[os_type][tool]
                     process = subprocess.Popen(
                         cmd,
                         shell=True,
@@ -491,39 +625,78 @@ QQ：  3072486255
                         text=True
                     )
                     
-                    # 模拟安装进度
                     while process.poll() is None:
                         if self.progress_bars[tool]['value'] < 90:
                             self.progress_bars[tool]['value'] += 1
                         dialog.update()
                         time.sleep(0.1)
                     
-                    # 检查安装结果
                     if process.returncode == 0:
                         self.progress_bars[tool]['value'] = 100
+                        
+                        # Check if tool needs PATH setup
+                        if not self.check_tool_path(tool):
+                            path_setup_needed.append(tool)
                     else:
                         self.progress_bars[tool]['bootstyle'] = "danger"
+                        failed_tools.append(tool)
                         
                 except Exception as e:
                     self.progress_bars[tool]['bootstyle'] = "danger"
+                    failed_tools.append(tool)
                     print(f"安装 {tool} 时出错：{e}")
                 
                 dialog.update()
             
-            # 安装完成后显示提示
-            ttk.Label(
-                dialog,
-                text="✅ 安装完成！请重启应用",
-                font=("微软雅黑", 12, "bold")
-            ).pack(pady=20)
+            # Show installation results
+            result_frame = ttk.Frame(dialog, padding=20)
+            result_frame.pack(fill=X)
+            
+            if failed_tools:
+                fail_msg = f"⚠️ 以下工具安装失败：\n{', '.join(failed_tools)}"
+                ttk.Label(
+                    result_frame,
+                    text=fail_msg,
+                    font=("微软雅黑", 12),
+                    foreground="red"
+                ).pack(pady=5)
+            
+            if path_setup_needed:
+                if os_type == 'macos':
+                    path_msg = "需要将以下工具添加到环境变量，请在终端执行：\n"
+                    path_msg += "echo 'export PATH=\"$PATH:/usr/local/bin:/usr/local/go/bin:$HOME/go/bin\"' >> ~/.zshrc\n"
+                    path_msg += "source ~/.zshrc"
+                elif os_type == 'linux':
+                    path_msg = "需要将以下工具添加到环境变量，请在终端执行：\n"
+                    path_msg += "echo 'export PATH=\"$PATH:/usr/local/go/bin:$HOME/go/bin\"' >> ~/.bashrc\n"
+                    path_msg += "source ~/.bashrc"
+                else:
+                    path_msg = "需要将以下工具添加到系统环境变量 Path 中：\n"
+                    path_msg += "%USERPROFILE%\\go\\bin\n"
+                    path_msg += "%LOCALAPPDATA%\\Programs\\Python\\Python3x\\Scripts"
+                
+                path_label = ttk.Label(
+                    result_frame,
+                    text=path_msg,
+                    font=("微软雅黑", 12),
+                    justify=LEFT
+                )
+                path_label.pack(pady=5)
+            
+            if not failed_tools and not path_setup_needed:
+                ttk.Label(
+                    result_frame,
+                    text="✅ 所有工具安装成功！",
+                    font=("微软雅黑", 12, "bold")
+                ).pack(pady=5)
             
             ttk.Button(
-                dialog,
+                result_frame,
                 text="重启应用",
                 command=self.restart_app,
                 bootstyle="success"
-            ).pack()
-
+            ).pack(pady=10)
+        
         threading.Thread(target=install_thread).start()
 
     def restart_app(self):
