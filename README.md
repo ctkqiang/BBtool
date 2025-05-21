@@ -227,6 +227,26 @@ python3 run.py
 - 📝 完善的日志记录功能
 - 🔧 SQLMap 高级选项支持
 
+### 🤝 加入技术交流群
+
+欢迎加入我们的技术交流群，与其他安全研究者分享经验和知识！
+
+<div align="center" style="margin: 20px 0">
+<table>
+<tr>
+<td align="center" width="300">
+<img src="assets/qrcode_1747839744296.jpg" width="200" />
+<br />
+<strong>QQ交流群: 934810107</strong>
+<br />
+（扫码加入，一起探讨安全技术）
+</td>
+</tr>
+</table>
+</div>
+
+---
+
 ## 许可证
 
 本项目采用 **木兰宽松许可证 (Mulan PSL)** 进行许可。  
