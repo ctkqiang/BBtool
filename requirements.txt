@@ -1,0 +1,7 @@
+# GUI 依赖
+ttkbootstrap>=1.0.0
+
+# 安全工具
+dirsearch>=0.4.3
+xsstrike>=3.1.5
+sqlmap>=1.6.12
