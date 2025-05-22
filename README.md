@@ -114,6 +114,122 @@ go install github.com/hakluke/hakrawler@latest
 pip3 install dirsearch xsstrike sqlmap
 ```
 
+4. SETPATH
+   > ⚠️ 如果不设置 PATH，以下工具都可能提示 "command not found"、"无法识别的命令"，程序运行失败！
+   > ❗ 务必在安装后配置环境变量！否则你的脚本/终端调用不到！
+   > 🧠 提示：安装后一定测试 subfinder -h、httpx -h 是否能正常运行，否则就要检查 PATH！
+
+好耶灵儿妹妹～我们来加一个非常 **严肃 + 彩虹警告 ⚠️✨** 的完整教程。涵盖所有工具安装命令 + 对应的 **PATH 设置指令** + 超醒脑的注意事项 ⚠️，照这个搞，100% 不出锅！
+
+---
+
+## 🍏 macOS
+
+| 工具        | 安装命令                                         | 需要添加到 PATH        |
+| ----------- | ------------------------------------------------ | ---------------------- |
+| `curl`      | `brew install curl`                              | 自动添加               |
+| `nmap`      | `brew install nmap`                              | 自动添加               |
+| `subfinder` | `brew install subfinder`                         | `/opt/homebrew/bin`    |
+| `httpx`     | `brew install httpx`                             | `/opt/homebrew/bin`    |
+| `dirsearch` | `pip3 install dirsearch`                         | `~/.local/bin`（有时） |
+| `xsstrike`  | `pip3 install xsstrike`                          | `~/.local/bin`         |
+| `sqlmap`    | `pip3 install sqlmap`                            | `~/.local/bin`         |
+| `hakrawler` | `go install github.com/hakluke/hakrawler@latest` | `$HOME/go/bin`         |
+
+### 设置 PATH（macOS, zsh 版）
+
+```bash
+nano ~/.zshrc
+```
+
+加入以下内容 👇
+
+```bash
+export PATH="$PATH:/opt/homebrew/bin:$HOME/go/bin:$HOME/.local/bin"
+```
+
+然后刷新：
+
+```bash
+source ~/.zshrc
+```
+
+---
+
+## 🪟 Windows
+
+| 工具        | 安装命令                | 默认路径（需手动加 PATH）                                      |
+| ----------- | ----------------------- | -------------------------------------------------------------- |
+| `curl`      | `winget install curl`   | 自动添加                                                       |
+| `nmap`      | `winget install nmap`   | 自动添加                                                       |
+| `subfinder` | `go install ...`        | `%USERPROFILE%\go\bin`                                         |
+| `httpx`     | `go install ...`        | `%USERPROFILE%\go\bin`                                         |
+| `dirsearch` | `pip install dirsearch` | `%USERPROFILE%\AppData\Local\Programs\Python\PythonXX\Scripts` |
+| `xsstrike`  | `pip install xsstrike`  | 同上                                                           |
+| `sqlmap`    | `pip install sqlmap`    | 同上                                                           |
+| `hakrawler` | `go install ...`        | `%USERPROFILE%\go\bin`                                         |
+
+### 设置 PATH（Windows）
+
+1. 打开「开始菜单」→ 搜索“环境变量”→ 系统变量 → `Path` → 编辑
+2. 添加如下路径（根据你自己的 Python 路径调整）：
+
+```powershell
+%USERPROFILE%\go\bin
+%USERPROFILE%\AppData\Local\Programs\Python\Python311\Scripts
+```
+
+3. 保存 → 重启 CMD 或 PowerShell → 测试工具是否可运行
+
+---
+
+## 🐧 Linux（Debian / Ubuntu）
+
+| 工具        | 安装命令                 | 需要添加到 PATH |
+| ----------- | ------------------------ | --------------- |
+| `curl`      | `sudo apt install curl`  | 自动添加        |
+| `nmap`      | `sudo apt install nmap`  | 自动添加        |
+| `subfinder` | `go install ...`         | `$HOME/go/bin`  |
+| `httpx`     | `go install ...`         | `$HOME/go/bin`  |
+| `dirsearch` | `pip3 install dirsearch` | `~/.local/bin`  |
+| `xsstrike`  | `pip3 install xsstrike`  | `~/.local/bin`  |
+| `sqlmap`    | `pip3 install sqlmap`    | `~/.local/bin`  |
+| `hakrawler` | `go install ...`         | `$HOME/go/bin`  |
+
+### 设置 PATH（bash/zsh）
+
+```bash
+nano ~/.bashrc     # 如果你用 bash
+nano ~/.zshrc      # 如果你用 zsh
+```
+
+添加：
+
+```bash
+export PATH="$PATH:$HOME/go/bin:$HOME/.local/bin"
+```
+
+保存后刷新：
+
+```bash
+source ~/.bashrc   # 或 source ~/.zshrc
+```
+
+---
+
+## ✅ 验证工具是否 OK
+
+```bash
+which subfinder
+subfinder -h
+
+which httpx
+httpx -h
+
+sqlmap --version
+xsstrike --version
+```
+
 ## 🚀 使用指南
 
 1. 启动程序：
