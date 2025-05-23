@@ -119,7 +119,6 @@ pip3 install dirsearch xsstrike sqlmap
    > ❗ 务必在安装后配置环境变量！否则你的脚本/终端调用不到！
    > 🧠 提示：安装后一定测试 subfinder -h、httpx -h 是否能正常运行，否则就要检查 PATH！
 
-
 ---
 
 ## 🍏 macOS
@@ -350,9 +349,16 @@ python3 run.py
 <table>
 <tr>
 <td align="center" width="300">
-<img src="assets/qrcode_1747839744296.jpg" width="200" />
+<img src="./assets/qrcode_1747839744296.jpg" width="200" />
 <br />
 <strong>QQ交流群: 934810107</strong>
+<br />
+（扫码加入，一起探讨安全技术）
+</td>
+<td align="center" width="300">
+<img src="./assets/1747996785328.png" width="200"/>
+<br />
+<strong>钉钉交流群</strong>
 <br />
 （扫码加入，一起探讨安全技术）
 </td>
