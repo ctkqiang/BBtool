@@ -10,7 +10,7 @@ import os
 import time 
 
 tools = {
-    'curl': 'curl -v -A "Mozilla/5.0" -H "Accept: */*" -H "Connection: keep-alive" {target}',
+    'curl': 'curl -v -A "Mozilla/5.0" -H "Accept: */*" -H "Connection: keep-alive" {target}' if sys.platform != 'win32' else 'curl -v -A "Mozilla/5.0" -H "Accept: */*" -H "Connection: keep-alive" "{target}"',
     'nmap': 'nmap -sV -p- -T4 {target}',
     'subfinder': 'subfinder -d {target} -all | tee subdomain.txt',
     'httpx': 'httpx --list subdomain.txt -ports 80,443,8000,8080,3000 -title -tech-detect -status-code -o httpx_out.txt',
