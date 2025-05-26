@@ -121,6 +121,8 @@ pip3 install dirsearch xsstrike sqlmap
 
 ---
 
+🔧 环境变量配置指南：
+
 ## 🍏 macOS
 
 | 工具        | 安装命令                                         | 需要添加到 PATH        |
