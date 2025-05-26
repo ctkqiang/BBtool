@@ -403,11 +403,46 @@ class BugBountyApp:
         self.log("✨ 日志已清除")
 
     def save_logs(self):
-        filepath = filedialog.asksaveasfilename(defaultextension=".txt")
-        if filepath:
-            with open(filepath, "w") as f:
-                f.write(self.log_data)
-            self.log(f"✅ 日志已保存到：{filepath}")
+        try:
+            # 设置默认文件名（包含时间戳）
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            default_filename = f"bug_bounty_log_{timestamp}.txt"
+            
+            # 根据操作系统设置保存对话框的参数
+            if sys.platform == 'win32':
+                filetypes = [("文本文件", "*.txt"), ("所有文件", "*.*")]
+                defaultextension = ".txt"
+                initialdir = os.path.expanduser("~\\Documents")
+            else:
+                filetypes = [("文本文件", ".txt"), ("所有文件", ".*")]
+                defaultextension = ".txt"
+                initialdir = os.path.expanduser("~/Documents")
+        
+            filepath = filedialog.asksaveasfilename(
+                initialfile=default_filename,
+                initialdir=initialdir,
+                defaultextension=defaultextension,
+                filetypes=filetypes,
+                title="保存扫描日志"
+            )
+        
+            if filepath:
+                # 使用utf-8编码保存，确保中文正常显示
+                with open(filepath, "w", encoding="utf-8") as f:
+                    # 添加日志头部信息
+                    header = f"漏洞赏金扫描日志\n时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n{'='*50}\n\n"
+                    f.write(header + self.log_data)
+                
+                self.log(f"✅ 日志已保存到：{filepath}")
+                
+                # 如果是Windows，自动打开保存目录
+                if sys.platform == 'win32':
+                    os.startfile(os.path.dirname(filepath))
+                
+        except Exception as e:
+            self.log(f"❌ 保存日志失败：{str(e)}")
+            if sys.platform == 'win32':
+                self.log("请检查文件路径是否包含特殊字符，或尝试使用管理员权限运行程序。")
 
     def change_theme(self, theme_name):
         self.style.theme_use(theme_name)
@@ -505,8 +540,18 @@ QQ：  3072486255
         try:
             if tool_name.startswith('sqlmap_'):
                 tool_name = 'sqlmap'
-            result = subprocess.run(['which', tool_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            return result.returncode == 0
+            
+            # Windows下特殊处理
+            if sys.platform == 'win32':
+                paths = os.environ['PATH'].split(';')
+                for path in paths:
+                    if os.path.exists(os.path.join(path, tool_name + '.exe')):
+                        return True
+            else:
+                # Unix系统使用which命令
+                result = subprocess.run(['which', tool_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
+
+                return result.returncode == 0
         except Exception:
             return False
 
@@ -530,7 +575,7 @@ QQ：  3072486255
         
         # 为所有工具创建状态指示器
         self.progress_bars = {}
-        # Filter out sqlmap_* options from the tools list
+        
         all_tools = [tool for tool in tools.keys() if not tool.startswith('sqlmap_') or tool == 'sqlmap']
         
         for tool in all_tools:
