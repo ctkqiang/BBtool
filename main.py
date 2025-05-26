@@ -5,9 +5,11 @@ import threading
 import subprocess
 import datetime
 import sys
+import glob
 import tkinter as tk
 import os
 import time 
+import ctypes
 
 tools = {
     'curl': 'curl -v -A "Mozilla/5.0" -H "Accept: */*" -H "Connection: keep-alive" {target}' if sys.platform != 'win32' else 'curl -v -A "Mozilla/5.0" -H "Accept: */*" -H "Connection: keep-alive" "{target}"',
@@ -68,7 +70,7 @@ tool_install_commands = {
 class BugBountyApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("🕷️ 漏洞赏金工具 v1.0（灵儿定制）")
+        self.root.title("🕷️ 漏洞赏金工具 v1.0.2（灵儿定制）")
         self.root.geometry("800x600")
         self.log_data = ""
         self.scanning = False
@@ -95,6 +97,7 @@ class BugBountyApp:
             "cyborg": "机械风格",
             "solar": "阳光模式"
         }
+        
         for theme_id, theme_name in themes.items():
             theme_menu.add_command(
                 label=theme_name,
@@ -449,7 +452,7 @@ class BugBountyApp:
         self.log(f"✨ 已切换到{theme_name}主题")
 
     def show_about(self):
-        about_text = """🕷️ 漏洞赏金工具 v1.0
+        about_text = """🕷️ 漏洞赏金工具 v1.0.2
         
 集成多种安全测试工具的漏洞赏金猎人助手：
 
@@ -540,19 +543,41 @@ QQ：  3072486255
         try:
             if tool_name.startswith('sqlmap_'):
                 tool_name = 'sqlmap'
-            
-            # Windows下特殊处理
-            if sys.platform == 'win32':
-                paths = os.environ['PATH'].split(';')
-                for path in paths:
-                    if os.path.exists(os.path.join(path, tool_name + '.exe')):
-                        return True
-            else:
-                # Unix系统使用which命令
-                result = subprocess.run(['which', tool_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
-
-                return result.returncode == 0
-        except Exception:
+                
+                # Windows系统特殊处理
+                if sys.platform == 'win32':
+                    # 检查系统PATH中的所有目录
+                    paths = os.environ['PATH'].split(';')
+                    # 检查常见的工具安装路径
+                    additional_paths = [
+                        os.path.expanduser('~\\go\\bin'),
+                        os.path.expanduser('~\\AppData\\Local\\Programs\\Python\\Python3*\\Scripts'),
+                        os.path.expanduser('~\\AppData\\Local\\Programs\\Python\\Python3*'),
+                        'C:\\Program Files\\Go\\bin',
+                        'C:\\Program Files (x86)\\Nmap'
+                    ]
+                    paths.extend(additional_paths)
+                    
+                    # 检查可执行文件是否存在
+                    for path in paths:
+                        if '*' in path:  # 处理通配符路径
+                            
+                            matching_paths = glob.glob(path)
+                            for match_path in matching_paths:
+                                exe_path = os.path.join(match_path, tool_name + '.exe')
+                                if os.path.exists(exe_path):
+                                    return True
+                        else:
+                            exe_path = os.path.join(path, tool_name + '.exe')
+                            if os.path.exists(exe_path):
+                                return True
+                    return False
+                else:
+                    # Unix系统使用which命令
+                    result = subprocess.run(['which', tool_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    return result.returncode == 0
+        except Exception as e:
+            print(f"检查工具路径时出错：{e}")
             return False
 
     def show_installation_dialog(self, missing_tools):
@@ -654,12 +679,24 @@ QQ：  3072486255
 
     def install_tools(self, missing_tools, dialog):
         def install_thread():
-            if sys.platform == "darwin":
-                os_type = 'macos'
-            elif sys.platform == "win32":
-                os_type = 'windows'
-            else:
-                os_type = 'linux'
+            if sys.platform == "win32":
+                # 检查是否以管理员权限运行
+                
+                if not ctypes.windll.shell32.IsUserAnAdmin():
+                    self.log("⚠️ 请以管理员权限运行程序进行工具安装")
+                    return
+                    
+                # 确保Go环境已安装
+                if any(tool in missing_tools for tool in ['subfinder', 'httpx', 'hakrawler']):
+                    if not self.check_tool_path('go'):
+                        self.log("⚠️ 请先安装Go语言环境：https://golang.org/dl/")
+                        return
+                        
+                # 确保Python环境已安装
+                if any(tool in missing_tools for tool in ['dirsearch', 'xsstrike', 'sqlmap']):
+                    if not self.check_tool_path('python3') and not self.check_tool_path('python'):
+                        self.log("⚠️ 请先安装Python环境：https://www.python.org/downloads/")
+                        return
                 
             failed_tools = []
             path_setup_needed = []
@@ -725,17 +762,18 @@ QQ：  3072486255
                     path_msg += "echo 'export PATH=\"$PATH:/usr/local/go/bin:$HOME/go/bin\"' >> ~/.bashrc\n"
                     path_msg += "source ~/.bashrc"
                 else:
-                    path_msg = "需要将以下工具添加到系统环境变量 Path 中：\n"
-                    path_msg += "%USERPROFILE%\\go\\bin\n"
-                    path_msg += "%LOCALAPPDATA%\\Programs\\Python\\Python3x\\Scripts"
-                
-                path_label = ttk.Label(
-                    result_frame,
-                    text=path_msg,
-                    font=("微软雅黑", 12),
-                    justify=LEFT
-                )
-                path_label.pack(pady=5)
+                    path_msg = "请将以下路径添加到系统环境变量Path中：\n"
+                    path_msg += "1. %USERPROFILE%\\go\\bin\n"
+                    path_msg += "2. %LOCALAPPDATA%\\Programs\\Python\\Python3*\\Scripts\n"
+                    path_msg += "\n添加方法：\n"
+                    path_msg += "1. 按Win+X，选择'系统'\n"
+                    path_msg += "2. 点击'高级系统设置'\n"
+                    path_msg += "3. 点击'环境变量'\n"
+                    path_msg += "4. 在'用户变量'中找到'Path'\n"
+                    path_msg += "5. 点击'编辑'并添加上述路径\n"
+                    path_msg += "6. 重启终端和应用程序"
+                    
+                    self.log(path_msg)
             
             if not failed_tools and not path_setup_needed:
                 ttk.Label(
@@ -789,7 +827,8 @@ QQ：  3072486255
 
     def show_tools_info(self):
         """显示工具说明"""
-        tools_text = """🛠️ 工具说明
+        tools_text = """
+        🛠️ 工具说明
 
 1. curl
 • 功能：HTTP请求测试工具
@@ -830,7 +869,8 @@ QQ：  3072486255
 
     def check_update(self):
         """检查更新"""
-        update_text = """✨ 版本信息
+        update_text = """
+        ✨ 版本信息
 
 当前版本：v1.0
 发布日期：2024-01
