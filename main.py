@@ -308,13 +308,13 @@ class BugBountyApp:
             self.log(f"💥 执行命令：{cmd}")
             shell_path = '/bin/zsh' if sys.platform == 'darwin' else '/bin/sh'
             
-            # 默认选择shell路径 
-            # 苹果系统 = "bin/zsh"
-            # 微软 = "cmd/exe"
-            # 其他 = "/bin/sh"
-            # 根据操作系统选择shell路径
-
-            print(sys.platform)
+            # 根据操作系统为 subprocess 选择合适的 shell 执行环境：
+            # - Windows 平台：使用默认的 cmd.exe（不传 executable 参数）
+            # - macOS 平台：优先使用 /bin/zsh（更现代）
+            # - 其他类 Unix 系统：使用 /bin/sh（传统兼容性更好）
+            #
+            # 注：如果在 Windows 下指定了不存在的 Unix Shell 路径（如 /bin/sh），
+            # 会触发 WinError 3（找不到路径）错误，因此需特别处理。
             
             if sys.platform == "win32":
                 self.current_process = subprocess.Popen(
