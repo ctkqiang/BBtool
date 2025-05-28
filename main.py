@@ -306,16 +306,33 @@ class BugBountyApp:
     def run_command(self, cmd):
         try:
             self.log(f"💥 执行命令：{cmd}")
-            # 根据操作系统选择shell路径
             shell_path = '/bin/zsh' if sys.platform == 'darwin' else '/bin/sh'
-            self.current_process = subprocess.Popen(
-                cmd, 
-                shell=True,
-                executable=shell_path,  # 添加executable参数指定shell路径
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
+            
+            # 默认选择shell路径 
+            # 苹果系统 = "bin/zsh"
+            # 微软 = "cmd/exe"
+            # 其他 = "/bin/sh"
+            # 根据操作系统选择shell路径
+
+            print(sys.platform)
+            
+            if sys.platform == "win32":
+                self.current_process = subprocess.Popen(
+                    cmd,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+            else:
+                self.current_process = subprocess.Popen(
+                    cmd, 
+                    shell=True,
+                    executable=shell_path,  # 添加executable参数指定shell路径
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
             
             while self.scanning:
                 output = self.current_process.stdout.readline()
