@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # 导入所需的库
 import time  # 用于实现延时功能
 import subprocess  # 用于创建和管理子进程
