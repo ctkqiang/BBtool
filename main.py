@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from tkinter import filedialog, scrolledtext
