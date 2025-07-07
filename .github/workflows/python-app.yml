@@ -27,12 +27,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip3 install --upgrade pip
-          pip3 install -r requirements.txt
-          pip3 install pyinstaller
+          python -m pip install --upgrade "pip<24.1" || echo "跳过 pip 升级"
+          pip install -r requirements.txt
+          pip install pyinstaller
 
       - name: Build executable
-        run: python3 build.py
+        run: python build.py
 
       - name: Rename and move binary
         run: |
