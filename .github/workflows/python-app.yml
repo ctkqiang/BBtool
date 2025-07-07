@@ -27,13 +27,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+          pip3 install --upgrade pip
+          pip3 install -r requirements.txt
+          pip3 install pyinstaller
 
       - name: Build executable
-        run: |
-          pyinstaller --noconfirm --onefile --windowed main.py --name ${{ env.APP_NAME }}
+        run: python3 build.py
 
       - name: Rename and move binary
         run: |
