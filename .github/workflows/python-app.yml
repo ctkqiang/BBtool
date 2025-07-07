@@ -11,10 +11,9 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, macos-latest]
-        python-version: ['3.10', 'latest']
+        python-version: ['3.12']
 
     env:
-      PYTHON_VERSION: '3.10'
       APP_NAME: 'bbtool'
 
     steps:
@@ -24,7 +23,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 'latest'
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
@@ -38,7 +37,7 @@ jobs:
       - name: Rename and move binary
         run: |
           mkdir -p release
-          cp dist/${{ env.APP_NAME }}* release/
+          cp dist/${{ env.APP_NAME }}* release/ || cp dist/* release/
 
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v1
